@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>赛博先知 · 团契智能讨论站</title>
-    <!-- 引入Firebase实时数据库CDN -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
     <style>
         *{
             margin: 0;
@@ -106,6 +103,7 @@
             margin: 14px 0;
             font-size: 15px;
             color: #a0c8e8;
+            text-align: center;
         }
         .self-name{
             font-size: 26px;
@@ -121,7 +119,7 @@
             margin: 10px 0;
         }
         .prophet-desc{
-            background: rgba(30,40,80,0.5);
+            background: rgba30,40,80,0.5;
             border: 1px solid rgba(100,180,255,0.3);
             border-radius: 10px;
             padding: 12px 16px;
@@ -195,14 +193,12 @@
             .question-text{font-size: 16px;}
             .en-question{font-size: 13px;}
             .common-btn{margin:6px;width:75%;}
-            .self-name{font-size:22px;}
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>赛博先知 · 团契智能讨论站</h1>
-
         <div class="role-box" id="rolePanel">
             <h3 style="color:#88d8ff;margin-bottom:15px;">选择你的身份终端</h3>
             <div class="set-box">
@@ -246,24 +242,28 @@
         </div>
     </div>
 
+    <!-- 引入Firebase核心SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+
     <script>
-        // ============ 在此粘贴你的Firebase配置 ============
-
+        // ========== 替换为你自己的Firebase配置 ==========
        const firebaseConfig = {
-  apiKey: "AIzaSyA3-NJ_dyIFvedomfKgCKKGGtoyre--q-8",
-  authDomain: "fellowtalk-dc72b.firebaseapp.com",
-  projectId: "fellowtalk-dc72b",
-  storageBucket: "fellowtalk-dc72b.firebasestorage.app",
-  messagingSenderId: "509160448099",
-  appId: "1:509160448099:web:c950a9e888ccafc7709856"
+  apiKey: "AIzaSyA3-NJ_dyIFvedomfKgCKKGGtoyre--q-8",
+  authDomain: "fellowtalk-dc72b.firebaseapp.com",
+  databaseURL: "https://fellowtalk-dc72b-default-rtdb.firebaseio.com",
+  projectId: "fellowtalk-dc72b",
+  storageBucket: "fellowtalk-dc72b.firebasestorage.app",
+  messagingSenderId: "509160448099",
+  appId: "1:509160448099:web:c950a9e888ccafc7709856"
 };
-        // =================================================
 
-        // 初始化云端数据库
+        // 初始化Firebase
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const groupRef = db.ref("groupData");
+        const db = firebase.firestore();
+        const docRef = db.collection("group_data").doc("mainData");
 
+        // 先知数据列表
         const prophetInfo = [
             {name:"以赛亚",desc:"伟大先知，预言弥赛亚降临，忠心传达神旨意，唤醒世人悔改归向真理。"},
             {name:"耶利米",desc:"流泪先知，坚守使命直言劝谏，历经苦难仍不离不弃守护信仰本心。"},
@@ -283,6 +283,7 @@
             {name:"玛拉基",desc:"末时先知，坚守信仰底线，坚守忠诚，维护真挚的心灵契约。"}
         ];
 
+        // 讨论议题列表
         const questionList = [
             {q:"近期生活里，哪些经历让你真切感受到上帝的守护与带领？",eq:"Which experiences in recent life make you truly feel God's protection and guidance?",v:"箴言3:5-6 你要专心仰赖耶和华，不可倚靠自己的聪明，在你一切所行的事上都要认定他，他必指引你的路。"},
             {q:"信仰在你的三观塑造中起到了怎样的作用？",eq:"What role does faith play in shaping your outlook on life?",v:"罗马书12:2 不要效法这个世界，只要心意更新而变化，叫你们察验何为神的善良、纯全、可喜悦的旨意。"},
@@ -306,15 +307,35 @@
         let currentQIndex = 0;
         let currentLeadProphet = "";
         let myProphetIndex = localStorage.getItem("myProphetIndex") ?? "";
-        let myInfo;
 
-        // 监听云端数据变化，全设备实时刷新
-        groupRef.on("value", snapshot => {
-            const data = snapshot.val() || {};
-            groupTotal = data.groupTotal || 0;
-            currentQIndex = data.currentQIndex || 0;
-            currentLeadProphet = data.currentLeadProphet || "";
+        // 页面初始化加载数据
+        window.onload = async function(){
+            try{
+                const res = await docRef.get();
+                if(res.exists){
+                    const data = res.data();
+                    groupTotal = data.groupTotal || 0;
+                    currentQIndex = data.currentQIndex || 0;
+                    currentLeadProphet = data.currentLeadProphet || "";
+                    document.getElementById("noteInput").value = data.groupNote || "";
+                    refreshView();
+                }else{
+                    await docRef.set({
+                        groupTotal:0,currentQIndex:0,currentLeadProphet:"",groupNote:""
+                    });
+                }
+            }catch(err){
+                console.log("数据加载异常",err);
+            }
+        }
 
+        // 数据更新函数
+        async function updateDB(field,value){
+            await docRef.update({[field]:value});
+        }
+
+        // 视图刷新
+        function refreshView(){
             if(groupTotal > 0){
                 document.getElementById("leaderNumShow").innerText = `当前小组在册总人数：${groupTotal} 人`;
                 document.getElementById("pickMemberBtn").classList.remove("hide");
@@ -323,34 +344,23 @@
             if(currentLeadProphet){
                 document.getElementById("pickResult").innerText = `本轮议题带领先知：${currentLeadProphet}`;
                 document.getElementById("currentLeaderBox").innerText = `本轮议题带领先知：${currentLeadProphet}`;
-            }else{
-                document.getElementById("pickResult").innerText = "";
-                document.getElementById("currentLeaderBox").innerText = "";
             }
             loadQuestion();
-            if(data.groupNote !== undefined){
-                document.getElementById("noteInput").value = data.groupNote;
-            }
-        });
-
-        // 统一上传数据到云端
-        function updateCloud(key, value){
-            let obj = {};
-            obj[key] = value;
-            groupRef.update(obj);
         }
 
+        // 分配个人先知身份
         function allocateSelfName(){
             if(myProphetIndex === ""){
                 let randIdx = Math.floor(Math.random() * prophetInfo.length);
                 myProphetIndex = randIdx;
-                localStorage.setItem("myProphetIndex", randIdx);
+                localStorage.setItem("myProphetIndex",randIdx);
             }
-            myInfo = prophetInfo[myProphetIndex];
+            const myInfo = prophetInfo[myProphetIndex];
             document.getElementById("selfNameBox").innerHTML = `<span class="self-name">${myInfo.name}</span>`;
             document.getElementById("prophetDescBox").innerHTML = `<div class="prophet-desc">先知简介：${myInfo.desc}</div>`;
         }
 
+        // 身份切换
         function setLeader(){
             isLeader = true;
             document.getElementById("rolePanel").classList.add("hide");
@@ -364,32 +374,40 @@
             showMainContent();
         }
 
-        function confirmGroupNum(){
+        // 确认小组人数
+        async function confirmGroupNum(){
             let num = parseInt(document.getElementById("totalNumInput").value);
             if(isNaN(num) || num < 2 || num > 20){
                 alert("请输入2-20区间有效成员数量");
                 return;
             }
-            updateCloud("groupTotal", num);
+            groupTotal = num;
+            await updateDB("groupTotal",num);
             showMainContent();
+            refreshView();
         }
 
-        function randomPickProphet(){
+        // 随机选取带队先知
+        async function randomPickProphet(){
             let ranIdx = Math.floor(Math.random() * groupTotal);
             currentLeadProphet = prophetInfo[ranIdx % prophetInfo.length].name;
-            updateCloud("currentLeadProphet", currentLeadProphet);
+            await updateDB("currentLeadProphet",currentLeadProphet);
+            refreshView();
         }
 
-        function switchNextQuestion(){
+        // 切换议题
+        async function switchNextQuestion(){
             currentQIndex++;
             if(currentQIndex >= questionList.length){
                 alert("全部讨论议题已完结！");
                 currentQIndex = questionList.length - 1;
             }
-            updateCloud("currentQIndex", currentQIndex);
-            updateCloud("currentLeadProphet", "");
+            await updateDB("currentQIndex",currentQIndex);
+            await updateDB("currentLeadProphet","");
+            refreshView();
         }
 
+        // 展示主内容区域
         function showMainContent(){
             document.getElementById("selfNameBox").classList.remove("hide");
             document.getElementById("prophetDescBox").classList.remove("hide");
@@ -398,16 +416,18 @@
             document.getElementById("notePanel").classList.remove("hide");
         }
 
+        // 加载对应议题内容
         function loadQuestion(){
-            let item = questionList[currentQIndex];
+            const item = questionList[currentQIndex];
             document.getElementById("question").innerText = item.q;
             document.getElementById("enQuestion").innerText = item.eq;
             document.getElementById("verse").innerText = item.v;
         }
 
-        function saveNote(){
-            let val = document.getElementById("noteInput").value;
-            updateCloud("groupNote", val);
+        // 保存笔记内容
+        async function saveNote(){
+            const noteVal = document.getElementById("noteInput").value;
+            await updateDB("groupNote",noteVal);
         }
     </script>
 </body>
