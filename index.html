@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>赛博先知 · 团契智能讨论站</title>
+    <!-- 引入Firebase实时数据库CDN -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script>
     <style>
         *{
             margin: 0;
@@ -103,9 +106,7 @@
             margin: 14px 0;
             font-size: 15px;
             color: #a0c8e8;
-            text-align: center;
         }
-        /* 先知代号样式：放大、斜体、彩色渐变背景 */
         .self-name{
             font-size: 26px;
             font-style: italic;
@@ -119,7 +120,6 @@
             text-shadow: 0 0 10px rgba(76,217,255,0.5);
             margin: 10px 0;
         }
-        /* 先知简介卡片 居中优化 */
         .prophet-desc{
             background: rgba(30,40,80,0.5);
             border: 1px solid rgba(100,180,255,0.3);
@@ -132,7 +132,6 @@
             text-align: center;
             max-width: 90%;
         }
-        /* 本轮带领人醒目样式 */
         .leader-tag{
             font-size: 18px;
             color: #ff5e7d;
@@ -204,7 +203,6 @@
     <div class="container">
         <h1>赛博先知 · 团契智能讨论站</h1>
 
-        <!-- 初始身份选择面板 -->
         <div class="role-box" id="rolePanel">
             <h3 style="color:#88d8ff;margin-bottom:15px;">选择你的身份终端</h3>
             <div class="set-box">
@@ -213,7 +211,6 @@
             </div>
         </div>
 
-        <!-- 组长专属操作面板 -->
         <div class="role-box hide" id="leaderSetPanel">
             <h3 style="color:#88d8ff;margin-bottom:15px;">组长主控操作台</h3>
             <div class="set-box">
@@ -223,7 +220,6 @@
             <div class="set-box">
                 <button class="common-btn" onclick="confirmGroupNum()">确认锁定人数</button>
             </div>
-            <!-- 仅保留单处人数显示 -->
             <div class="info-text" id="leaderNumShow"></div>
             <div class="set-box">
                 <button class="common-btn hide" id="pickMemberBtn" onclick="randomPickProphet()">随机指派本轮带队先知</button>
@@ -234,20 +230,16 @@
             </div>
         </div>
 
-        <!-- 个人专属先知身份+简介 -->
         <div class="info-text hide" id="selfNameBox"></div>
         <div class="hide" id="prophetDescBox"></div>
-        <!-- 全局本轮带队人公示，组员组长均可看见 -->
         <div class="leader-tag hide" id="currentLeaderBox"></div>
 
-        <!-- 议题经文展示区域 -->
         <div class="card-box hide" id="questionPanel">
             <p class="question-text" id="question">等待组长终端启动议题</p>
             <p class="en-question" id="enQuestion">Waiting for leader to start discussion</p>
             <div class="verse-box" id="verse">神圣经文同步加载中</div>
         </div>
 
-        <!-- 个人笔记记录面板 -->
         <div class="note-box hide" id="notePanel">
             <div class="note-title">个人思绪记录库</div>
             <textarea id="noteInput" placeholder="记录感悟、思考与观点..." oninput="saveNote()"></textarea>
@@ -255,7 +247,23 @@
     </div>
 
     <script>
-        // 先知名字+简短事迹简介库
+        // ============ 在此粘贴你的Firebase配置 ============
+
+       const firebaseConfig = {
+  apiKey: "AIzaSyA3-NJ_dyIFvedomfKgCKKGGtoyre--q-8",
+  authDomain: "fellowtalk-dc72b.firebaseapp.com",
+  projectId: "fellowtalk-dc72b",
+  storageBucket: "fellowtalk-dc72b.firebasestorage.app",
+  messagingSenderId: "509160448099",
+  appId: "1:509160448099:web:c950a9e888ccafc7709856"
+};
+        // =================================================
+
+        // 初始化云端数据库
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const groupRef = db.ref("groupData");
+
         const prophetInfo = [
             {name:"以赛亚",desc:"伟大先知，预言弥赛亚降临，忠心传达神旨意，唤醒世人悔改归向真理。"},
             {name:"耶利米",desc:"流泪先知，坚守使命直言劝谏，历经苦难仍不离不弃守护信仰本心。"},
@@ -275,6 +283,24 @@
             {name:"玛拉基",desc:"末时先知，坚守信仰底线，坚守忠诚，维护真挚的心灵契约。"}
         ];
 
+        const questionList = [
+            {q:"近期生活里，哪些经历让你真切感受到上帝的守护与带领？",eq:"Which experiences in recent life make you truly feel God's protection and guidance?",v:"箴言3:5-6 你要专心仰赖耶和华，不可倚靠自己的聪明，在你一切所行的事上都要认定他，他必指引你的路。"},
+            {q:"信仰在你的三观塑造中起到了怎样的作用？",eq:"What role does faith play in shaping your outlook on life?",v:"罗马书12:2 不要效法这个世界，只要心意更新而变化，叫你们察验何为神的善良、纯全、可喜悦的旨意。"},
+            {q:"面对学业压力、升学迷茫时，你如何借着信仰调整自身状态？",eq:"How do you adjust yourself with faith when facing academic pressure and confusion?",v:"腓立比书4:6-7 应当一无挂虑，只要凡事借着祷告、祈求和感谢，将你们所要的告诉神。神所赐出人意外的平安，必在基督耶稣里保守你们的心怀意念。"},
+            {q:"步入青年阶段，坚守信仰对你而言最大的阻碍是什么？",eq:"What is the biggest obstacle for you to stick to faith in youth?",v:"彼得前书5:9 务要谨守，警醒。因为你们的仇敌魔鬼，如同吼叫的狮子，遍地游行，寻找可吞吃的人。"},
+            {q:"忙碌的日常中，你会以何种方式维系自己与上帝的联结？",eq:"How do you maintain your connection with God in busy daily life?",v:"诗篇16:8 我将耶和华常摆在我面前，因他在我右边，我便不至摇动。"},
+            {q:"你认为祷告是形式仪式，还是心灵与上帝的沟通？谈谈你的看法",eq:"Do you think prayer is a ritual or spiritual communication with God?",v:"耶利米书29:12 你们呼求我，祷告我，我就应允你们。"},
+            {q:"诸多信仰习惯里，哪一项对你的生命成长帮助最大？",eq:"Which faith habit helps you grow spiritually the most?",v:"约书亚记1:8 这律法书不可离开你的口，总要昼夜思想，好使你谨守遵行书上所写的一切话。"},
+            {q:"上帝审视人的内心，你觉得自身哪些品格最蒙上帝喜悦？",eq:"God looks at the heart, what qualities of yours please God most?",v:"撒母耳记上16:7 耶和华看人不像人看人，人是看外貌，耶和华是看内心。"},
+            {q:"成长路上你是否出现过信仰疑惑，又是如何跨过内心动摇的？",eq:"Have you ever doubted faith and how did you get through it?",v:"马可福音9:24 我信，但我信不足，求主帮助！"},
+            {q:"结合自身认知，你认为成熟的基督徒青年该具备哪些特质？",eq:"What qualities should a mature young Christian possess?",v:"约翰一书2:16 因为凡世界上的事，就像肉体的情欲、眼目的情欲，并今生的骄傲，都不是从父来的。"},
+            {q:"站在人生分叉路口，你期望信仰指引自己成为怎样的人？",eq:"What kind of person do you want faith to guide you to become?",v:"腓立比书3:13-14 忘记背后，努力面前的，向着标竿直跑，要得神在基督耶稣里从上面召我来得的奖赏。"},
+            {q:"日常研读圣经，最难坚持或是最难理解的部分是什么？",eq:"What part of Bible is hardest to persist in or understand?",v:"诗篇119:105 你的话是我脚前的灯，是我路上的光。"},
+            {q:"人生遭遇挫折困境，你如何理解上帝允许苦难存在的意义？",eq:"How do you understand the meaning of hardships permitted by God?",v:"罗马书8:28 我们晓得万事都互相效力，叫爱神的人得益处，就是按他旨意被召的人。"},
+            {q:"自评当下的信仰信心程度，哪些事情会影响你的信心强弱？",eq:"Evaluate your current faith level, what affects your faith?",v:"希伯来书11:1 信就是所望之事的实底，是未见之事的确据。"},
+            {q:"回望这段时光，细数三件你发自内心感恩上帝的事",eq:"Look back and share three things you sincerely thank God for",v:"帖撒罗尼迦前书5:18 凡事谢恩，因为这是神在基督耶稣里向你们所定的旨意。"}
+        ];
+
         let isLeader = false;
         let groupTotal = 0;
         let currentQIndex = 0;
@@ -282,21 +308,49 @@
         let myProphetIndex = localStorage.getItem("myProphetIndex") ?? "";
         let myInfo;
 
-        // 自动分配专属先知代号与简介
+        // 监听云端数据变化，全设备实时刷新
+        groupRef.on("value", snapshot => {
+            const data = snapshot.val() || {};
+            groupTotal = data.groupTotal || 0;
+            currentQIndex = data.currentQIndex || 0;
+            currentLeadProphet = data.currentLeadProphet || "";
+
+            if(groupTotal > 0){
+                document.getElementById("leaderNumShow").innerText = `当前小组在册总人数：${groupTotal} 人`;
+                document.getElementById("pickMemberBtn").classList.remove("hide");
+                document.getElementById("nextQBtn").classList.remove("hide");
+            }
+            if(currentLeadProphet){
+                document.getElementById("pickResult").innerText = `本轮议题带领先知：${currentLeadProphet}`;
+                document.getElementById("currentLeaderBox").innerText = `本轮议题带领先知：${currentLeadProphet}`;
+            }else{
+                document.getElementById("pickResult").innerText = "";
+                document.getElementById("currentLeaderBox").innerText = "";
+            }
+            loadQuestion();
+            if(data.groupNote !== undefined){
+                document.getElementById("noteInput").value = data.groupNote;
+            }
+        });
+
+        // 统一上传数据到云端
+        function updateCloud(key, value){
+            let obj = {};
+            obj[key] = value;
+            groupRef.update(obj);
+        }
+
         function allocateSelfName(){
             if(myProphetIndex === ""){
                 let randIdx = Math.floor(Math.random() * prophetInfo.length);
                 myProphetIndex = randIdx;
-                localStorage.setItem("myProphetIndex",randIdx);
+                localStorage.setItem("myProphetIndex", randIdx);
             }
             myInfo = prophetInfo[myProphetIndex];
-            document.getElementById("selfNameBox").innerHTML =
-                `<span class="self-name">${myInfo.name}</span>`;
-            document.getElementById("prophetDescBox").innerHTML =
-                `<div class="prophet-desc">先知简介：${myInfo.desc}</div>`;
+            document.getElementById("selfNameBox").innerHTML = `<span class="self-name">${myInfo.name}</span>`;
+            document.getElementById("prophetDescBox").innerHTML = `<div class="prophet-desc">先知简介：${myInfo.desc}</div>`;
         }
 
-        // 身份终端切换
         function setLeader(){
             isLeader = true;
             document.getElementById("rolePanel").classList.add("hide");
@@ -310,55 +364,40 @@
             showMainContent();
         }
 
-        // 组长锁定小组人数
         function confirmGroupNum(){
             let num = parseInt(document.getElementById("totalNumInput").value);
             if(isNaN(num) || num < 2 || num > 20){
                 alert("请输入2-20区间有效成员数量");
                 return;
             }
-            groupTotal = num;
-            document.getElementById("leaderNumShow").innerText = `当前小组在册总人数：${groupTotal} 人`;
-            document.getElementById("pickMemberBtn").classList.remove("hide");
-            document.getElementById("nextQBtn").classList.remove("hide");
+            updateCloud("groupTotal", num);
             showMainContent();
         }
 
-        // 随机抽取本轮带队先知
         function randomPickProphet(){
             let ranIdx = Math.floor(Math.random() * groupTotal);
             currentLeadProphet = prophetInfo[ranIdx % prophetInfo.length].name;
-            let tip = `本轮议题带领先知：${currentLeadProphet}`;
-            document.getElementById("pickResult").innerText = tip;
-            document.getElementById("currentLeaderBox").innerText = tip;
+            updateCloud("currentLeadProphet", currentLeadProphet);
         }
 
-        // 组长切换下一个讨论议题
         function switchNextQuestion(){
             currentQIndex++;
             if(currentQIndex >= questionList.length){
                 alert("全部讨论议题已完结！");
                 currentQIndex = questionList.length - 1;
             }
-            loadQuestion();
-            currentLeadProphet = "";
-            document.getElementById("pickResult").innerText = "";
-            document.getElementById("currentLeaderBox").innerText = "";
+            updateCloud("currentQIndex", currentQIndex);
+            updateCloud("currentLeadProphet", "");
         }
 
-        // 加载主讨论界面
         function showMainContent(){
             document.getElementById("selfNameBox").classList.remove("hide");
             document.getElementById("prophetDescBox").classList.remove("hide");
             document.getElementById("currentLeaderBox").classList.remove("hide");
             document.getElementById("questionPanel").classList.remove("hide");
             document.getElementById("notePanel").classList.remove("hide");
-            loadQuestion();
-            let oldNote = localStorage.getItem("groupNote") || "";
-            document.getElementById("noteInput").value = oldNote;
         }
 
-        // 读取双语议题与经文
         function loadQuestion(){
             let item = questionList[currentQIndex];
             document.getElementById("question").innerText = item.q;
@@ -366,90 +405,10 @@
             document.getElementById("verse").innerText = item.v;
         }
 
-        // 本地存储个人笔记
         function saveNote(){
             let val = document.getElementById("noteInput").value;
-            localStorage.setItem("groupNote", val);
+            updateCloud("groupNote", val);
         }
-
-        // 中英双语题库 中文在上 英文在下
-        const questionList = [
-            {
-                q:"近期生活里，哪些经历让你真切感受到上帝的守护与带领？",
-                eq:"Which experiences in recent life make you truly feel God's protection and guidance?",
-                v:"箴言3:5-6 你要专心仰赖耶和华，不可倚靠自己的聪明，在你一切所行的事上都要认定他，他必指引你的路。"
-            },
-            {
-                q:"信仰在你的三观塑造中起到了怎样的作用？",
-                eq:"What role does faith play in shaping your outlook on life?",
-                v:"罗马书12:2 不要效法这个世界，只要心意更新而变化，叫你们察验何为神的善良、纯全、可喜悦的旨意。"
-            },
-            {
-                q:"面对学业压力、升学迷茫时，你如何借着信仰调整自身状态？",
-                eq:"How do you adjust yourself with faith when facing academic pressure and confusion?",
-                v:"腓立比书4:6-7 应当一无挂虑，只要凡事借着祷告、祈求和感谢，将你们所要的告诉神。神所赐出人意外的平安，必在基督耶稣里保守你们的心怀意念。"
-            },
-            {
-                q:"步入青年阶段，坚守信仰对你而言最大的阻碍是什么？",
-                eq:"What is the biggest obstacle for you to stick to faith in youth?",
-                v:"彼得前书5:9 务要谨守，警醒。因为你们的仇敌魔鬼，如同吼叫的狮子，遍地游行，寻找可吞吃的人。"
-            },
-            {
-                q:"忙碌的日常中，你会以何种方式维系自己与上帝的联结？",
-                eq:"How do you maintain your connection with God in busy daily life?",
-                v:"诗篇16:8 我将耶和华常摆在我面前，因他在我右边，我便不至摇动。"
-            },
-            {
-                q:"你认为祷告是形式仪式，还是心灵与上帝的沟通？谈谈你的看法",
-                eq:"Do you think prayer is a ritual or spiritual communication with God?",
-                v:"耶利米书29:12 你们呼求我，祷告我，我就应允你们。"
-            },
-            {
-                q:"诸多信仰习惯里，哪一项对你的生命成长帮助最大？",
-                eq:"Which faith habit helps you grow spiritually the most?",
-                v:"约书亚记1:8 这律法书不可离开你的口，总要昼夜思想，好使你谨守遵行书上所写的一切话。"
-            },
-            {
-                q:"上帝审视人的内心，你觉得自身哪些品格最蒙上帝喜悦？",
-                eq:"God looks at the heart, what qualities of yours please God most?",
-                v:"撒母耳记上16:7 耶和华看人不像人看人，人是看外貌，耶和华是看内心。"
-            },
-            {
-                q:"成长路上你是否出现过信仰疑惑，又是如何跨过内心动摇的？",
-                eq:"Have you ever doubted faith and how did you get through it?",
-                v:"马可福音9:24 我信，但我信不足，求主帮助！"
-            },
-            {
-                q:"结合自身认知，你认为成熟的基督徒青年该具备哪些特质？",
-                eq:"What qualities should a mature young Christian possess?",
-                v:"约翰一书2:16 因为凡世界上的事，就像肉体的情欲、眼目的情欲，并今生的骄傲，都不是从父来的。"
-            },
-            {
-                q:"站在人生分叉路口，你期望信仰指引自己成为怎样的人？",
-                eq:"What kind of person do you want faith to guide you to become?",
-                v:"腓立比书3:13-14 忘记背后，努力面前的，向着标竿直跑，要得神在基督耶稣里从上面召我来得的奖赏。"
-            },
-            {
-                q:"日常研读圣经，最难坚持或是最难理解的部分是什么？",
-                eq:"What part of Bible is hardest to persist in or understand?",
-                v:"诗篇119:105 你的话是我脚前的灯，是我路上的光。"
-            },
-            {
-                q:"人生遭遇挫折困境，你如何理解上帝允许苦难存在的意义？",
-                eq:"How do you understand the meaning of hardships permitted by God?",
-                v:"罗马书8:28 我们晓得万事都互相效力，叫爱神的人得益处，就是按他旨意被召的人。"
-            },
-            {
-                q:"自评当下的信仰信心程度，哪些事情会影响你的信心强弱？",
-                eq:"Evaluate your current faith level, what affects your faith?",
-                v:"希伯来书11:1 信就是所望之事的实底，是未见之事的确据。"
-            },
-            {
-                q:"回望这段时光，细数三件你发自内心感恩上帝的事",
-                eq:"Look back and share three things you sincerely thank God for",
-                v:"帖撒罗尼迦前书5:18 凡事谢恩，因为这是神在基督耶稣里向你们所定的旨意。"
-            }
-        ];
     </script>
 </body>
 </html>
