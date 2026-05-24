@@ -5,195 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>赛博先知 · 团契智能讨论站</title>
     <style>
-        *{
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Segoe UI", Roboto, sans-serif;
-        }
-        body{
-            min-height: 100vh;
-            background: #080c1a;
-            background-image: 
-                radial-gradient(circle at 20% 30%, rgba(0,180,255,0.12) 0%, transparent 40%),
-                radial-gradient(circle at 80% 70%, rgba(138,43,226,0.1) 0%, transparent 40%);
-            padding: 20px;
-            color: #e6f0ff;
-        }
-        .container{
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        h1{
-            text-align: center;
-            color: #00e5ff;
-            margin: 20px 0;
-            font-size: 24px;
-            text-shadow: 0 0 8px #00a8cc, 0 0 16px #0066aa;
-            letter-spacing: 2px;
-        }
-        .role-box{
-            background: rgba(15,25,50,0.75);
-            border: 1px solid rgba(0,200,255,0.35);
-            border-radius: 14px;
-            padding: 22px;
-            box-shadow: 0 0 12px rgba(0,180,255,0.2), inset 0 0 8px rgba(0,150,220,0.1);
-            margin-bottom: 20px;
-            text-align: center;
-            backdrop-filter: blur(8px);
-        }
-        .set-box{
-            margin: 16px 0;
-        }
-        input{
-            padding: 11px 12px;
-            width: 130px;
-            background: rgba(8,15,35,0.8);
-            border: 1px solid #00b4e6;
-            border-radius: 8px;
-            font-size: 15px;
-            color: #ffffff;
-            text-align: center;
-            outline: none;
-            transition: 0.3s;
-        }
-        input:focus{
-            box-shadow: 0 0 10px #00b4e6;
-            border-color: #00e5ff;
-        }
-        .card-box{
-            background: rgba(12,20,45,0.7);
-            border: 1px solid rgba(138,43,226,0.4);
-            border-radius: 14px;
-            box-shadow: 0 0 14px rgba(138,43,226,0.25);
-            padding: 32px 26px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            backdrop-filter: blur(6px);
-        }
-        .question-text{
-            font-size: 18px;
-            line-height: 1.9;
-            color: #f0f8ff;
-            text-align: center;
-            margin-bottom: 18px;
-        }
-        .en-question{
-            font-size: 15px;
-            color: #a8d8ff;
-            text-align: center;
-            margin-top: 6px;
-            line-height: 1.7;
-        }
-        .verse-box{
-            background: rgba(0,90,140,0.25);
-            border: 1px solid rgba(0,200,255,0.3);
-            border-radius: 10px;
-            padding: 14px 16px;
-            width: 100%;
-            font-size: 14px;
-            line-height: 1.7;
-            color: #b8e8ff;
-            text-align: center;
-        }
-        .info-text{
-            margin: 14px 0;
-            font-size: 15px;
-            color: #a0c8e8;
-            text-align: center;
-        }
-        .self-name{
-            font-size: 26px;
-            font-style: italic;
-            font-weight: 700;
-            padding: 8px 20px;
-            border-radius: 12px;
-            background: linear-gradient(135deg,#ff4d94,#4cd9ff,#9b59ff);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            text-shadow: 0 0 10px rgba(76,217,255,0.5);
-            margin: 10px 0;
-        }
-        .prophet-desc{
-            background: rgba30,40,80,0.5;
-            border: 1px solid rgba(100,180,255,0.3);
-            border-radius: 10px;
-            padding: 12px 16px;
-            margin: 8px auto 16px;
-            font-size: 14px;
-            line-height: 1.6;
-            color: #c0e0ff;
-            text-align: center;
-            max-width: 90%;
-        }
-        .leader-tag{
-            font-size: 18px;
-            color: #ff5e7d;
-            font-weight: 600;
-            margin: 12px 0;
-            text-shadow: 0 0 6px #c02942;
-            text-align: center;
-        }
-        .common-btn{
-            padding: 12px 26px;
-            background: linear-gradient(135deg,#0077be,#00b4e6);
-            color: #fff;
-            border: none;
-            border-radius: 30px;
-            font-size: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 9px;
-            box-shadow: 0 0 8px rgba(0,180,255,0.4);
-        }
-        .common-btn:hover{
-            background: linear-gradient(135deg,#0099e6,#00d0ff);
-            box-shadow: 0 0 14px rgba(0,210,255,0.6);
-            transform: translateY(-2px);
-        }
-        .note-box{
-            background: rgba(15,22,48,0.7);
-            border: 1px solid rgba(0,180,255,0.3);
-            border-radius: 14px;
-            padding: 22px;
-            box-shadow: 0 0 12px rgba(0,150,220,0.18);
-            backdrop-filter: blur(6px);
-        }
-        .note-title{
-            font-size: 17px;
-            color: #66d9ff;
-            margin-bottom: 14px;
-            text-shadow: 0 0 4px #0088bb;
-        }
-        textarea{
-            width: 100%;
-            height: 145px;
-            padding: 13px;
-            background: rgba(8,14,32,0.8);
-            border: 1px solid #0099cc;
-            border-radius: 10px;
-            font-size: 15px;
-            color: #e6f7ff;
-            resize: none;
-            outline: none;
-            transition: 0.3s;
-        }
-        textarea:focus{
-            box-shadow: 0 0 10px #00a8e0;
-        }
-        .hide{
-            display: none;
-        }
-        @media (max-width: 480px){
-            h1{font-size: 21px;}
-            .question-text{font-size: 16px;}
-            .en-question{font-size: 13px;}
-            .common-btn{margin:6px;width:75%;}
-        }
+        *{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",Roboto,sans-serif;}
+        body{min-height:100vh;background:#080c1a;background-image:radial-gradient(circle at 20% 30%,rgba(0,180,255,0.12) 0%,transparent 40%),radial-gradient(circle at 80% 70%,rgba(138,43,226,0.1) 0%,transparent 40%);padding:20px;color:#e6f0ff;}
+        .container{max-width:800px;margin:0 auto;}
+        h1{text-align:center;color:#00e5ff;margin:20px 0;font-size:24px;text-shadow:0 0 8px #00a8cc,0 0 16px #0066aa;letter-spacing:2px;}
+        .role-box{background:rgba(15,25,50,0.75);border:1px solid rgba(0,200,255,0.35);border-radius:14px;padding:22px;box-shadow:0 0 12px rgba(0,180,255,0.2),inset 0 0 8px rgba(0,150,220,0.1);margin-bottom:20px;text-align:center;backdrop-filter:blur(8px);}
+        .set-box{margin:16px 0;}
+        input{padding:11px 12px;width:130px;background:rgba(8,15,35,0.8);border:1px solid #00b4e6;border-radius:8px;font-size:15px;color:#ffffff;text-align:center;outline:none;transition:0.3s;}
+        input:focus{box-shadow:0 0 10px #00b4e6;border-color:#00e5ff;}
+        .card-box{background:rgba(12,20,45,0.7);border:1px solid rgba(138,43,226,0.4);border-radius:14px;box-shadow:0 0 14px rgba(138,43,226,0.25);padding:32px 26px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:20px;backdrop-filter:blur(6px);}
+        .question-text{font-size:18px;line-height:1.9;color:#f0f8ff;text-align:center;margin-bottom:18px;}
+        .en-question{font-size:15px;color:#a8d8ff;text-align:center;margin-top:6px;line-height:1.7;}
+        .verse-box{background:rgba(0,90,140,0.25);border:1px solid rgba(0,200,255,0.3);border-radius:10px;padding:14px 16px;width:100%;font-size:14px;line-height:1.7;color:#b8e8ff;text-align:center;}
+        .info-text{margin:14px 0;font-size:15px;color:#a0c8e8;text-align:center;}
+        .self-name{font-size:26px;font-style:italic;font-weight:700;padding:8px 20px;border-radius:12px;background:linear-gradient(135deg,#ff4d94,#4cd9ff,#9b59ff);background-clip:text;-webkit-background-clip:text;color:transparent;text-shadow:0 0 10px rgba(76,217,255,0.5);margin:10px 0;}
+        .prophet-desc{background:rgba(30,40,80,0.5);border:1px solid rgba(100,180,255,0.3);border-radius:10px;padding:12px 16px;margin:8px auto 16px;font-size:14px;line-height:1.6;color:#c0e0ff;text-align:center;max-width:90%;}
+        .leader-tag{font-size:18px;color:#ff5e7d;font-weight:600;margin:12px 0;text-shadow:0 0 6px #c02942;text-align:center;}
+        .common-btn{padding:12px 26px;background:linear-gradient(135deg,#0077be,#00b4e6);color:#fff;border:none;border-radius:30px;font-size:15px;cursor:pointer;transition:all 0.3s ease;margin:9px;box-shadow:0 0 8px rgba(0,180,255,0.4);}
+        .common-btn:hover{background:linear-gradient(135deg,#0099e6,#00d0ff);box-shadow:0 0 14px rgba(0,210,255,0.6);transform:translateY(-2px);}
+        .note-box{background:rgba(15,22,48,0.7);border:1px solid rgba(0,180,255,0.3);border-radius:14px;padding:22px;box-shadow:0 0 12px rgba(0,150,220,0.18);backdrop-filter:blur(6px);}
+        .note-title{font-size:17px;color:#66d9ff;margin-bottom:14px;text-shadow:0 0 4px #0088bb;}
+        textarea{width:100%;height:145px;padding:13px;background:rgba(8,14,32,0.8);border:1px solid #0099cc;border-radius:10px;font-size:15px;color:#e6f7ff;resize:none;outline:none;transition:0.3s;}
+        textarea:focus{box-shadow:0 0 10px #00a8e0;}
+        .hide{display:none;}
+        @media (max-width:480px){h1{font-size:21px;}.question-text{font-size:16px;}.en-question{font-size:13px;}.common-btn{margin:6px;width:75%;}}
     </style>
 </head>
 <body>
@@ -242,28 +77,31 @@
         </div>
     </div>
 
-    <!-- 引入Firebase核心SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+    <!-- 稳定版 Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
 
     <script>
-        // ========== 替换为你自己的Firebase配置 ==========
-       const firebaseConfig = {
-  apiKey: "AIzaSyA3-NJ_dyIFvedomfKgCKKGGtoyre--q-8",
-  authDomain: "fellowtalk-dc72b.firebaseapp.com",
-  databaseURL: "https://fellowtalk-dc72b-default-rtdb.firebaseio.com",
-  projectId: "fellowtalk-dc72b",
-  storageBucket: "fellowtalk-dc72b.firebasestorage.app",
-  messagingSenderId: "509160448099",
-  appId: "1:509160448099:web:c950a9e888ccafc7709856"
-};
+        const firebaseConfig = {
+          apiKey: "AIzaSyA3-NJ_dyIFvedomfKgCKKGGtoyre--q-8",
+          authDomain: "fellowtalk-dc72b.firebaseapp.com",
+          databaseURL: "https://fellowtalk-dc72b-default-rtdb.firebaseio.com",
+          projectId: "fellowtalk-dc72b",
+          storageBucket: "fellowtalk-dc72b.firebasestorage.app",
+          messagingSenderId: "509160448099",
+          appId: "1:509160448099:web:c950a9e888ccafc7709856"
+        };
 
-        // 初始化Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const docRef = db.collection("group_data").doc("mainData");
+        let db, docRef;
+        try {
+          firebase.initializeApp(firebaseConfig);
+          db = firebase.firestore();
+          docRef = db.collection("group_data").doc("mainData");
+        } catch (e) {
+          console.error("Firebase init failed:", e);
+          db = null;
+        }
 
-        // 先知数据列表
         const prophetInfo = [
             {name:"以赛亚",desc:"伟大先知，预言弥赛亚降临，忠心传达神旨意，唤醒世人悔改归向真理。"},
             {name:"耶利米",desc:"流泪先知，坚守使命直言劝谏，历经苦难仍不离不弃守护信仰本心。"},
@@ -283,7 +121,6 @@
             {name:"玛拉基",desc:"末时先知，坚守信仰底线，坚守忠诚，维护真挚的心灵契约。"}
         ];
 
-        // 讨论议题列表
         const questionList = [
             {q:"近期生活里，哪些经历让你真切感受到上帝的守护与带领？",eq:"Which experiences in recent life make you truly feel God's protection and guidance?",v:"箴言3:5-6 你要专心仰赖耶和华，不可倚靠自己的聪明，在你一切所行的事上都要认定他，他必指引你的路。"},
             {q:"信仰在你的三观塑造中起到了怎样的作用？",eq:"What role does faith play in shaping your outlook on life?",v:"罗马书12:2 不要效法这个世界，只要心意更新而变化，叫你们察验何为神的善良、纯全、可喜悦的旨意。"},
@@ -308,33 +145,33 @@
         let currentLeadProphet = "";
         let myProphetIndex = localStorage.getItem("myProphetIndex") ?? "";
 
-        // 页面初始化加载数据
         window.onload = async function(){
-            try{
-                const res = await docRef.get();
-                if(res.exists){
-                    const data = res.data();
-                    groupTotal = data.groupTotal || 0;
-                    currentQIndex = data.currentQIndex || 0;
-                    currentLeadProphet = data.currentLeadProphet || "";
-                    document.getElementById("noteInput").value = data.groupNote || "";
-                    refreshView();
-                }else{
-                    await docRef.set({
-                        groupTotal:0,currentQIndex:0,currentLeadProphet:"",groupNote:""
-                    });
+            if(db){
+                try{
+                    const res = await docRef.get();
+                    if(res.exists){
+                        const data = res.data();
+                        groupTotal = data.groupTotal || 0;
+                        currentQIndex = data.currentQIndex || 0;
+                        currentLeadProphet = data.currentLeadProphet || "";
+                        document.getElementById("noteInput").value = data.groupNote || "";
+                    }
+                }catch(err){
+                    console.log("数据加载异常",err);
                 }
-            }catch(err){
-                console.log("数据加载异常",err);
+            }
+            refreshView();
+        }
+
+        async function updateDB(field,value){
+            if(!db) return;
+            try{
+                await docRef.update({[field]:value});
+            }catch(e){
+                console.error("updateDB fail:",e);
             }
         }
 
-        // 数据更新函数
-        async function updateDB(field,value){
-            await docRef.update({[field]:value});
-        }
-
-        // 视图刷新
         function refreshView(){
             if(groupTotal > 0){
                 document.getElementById("leaderNumShow").innerText = `当前小组在册总人数：${groupTotal} 人`;
@@ -348,7 +185,6 @@
             loadQuestion();
         }
 
-        // 分配个人先知身份
         function allocateSelfName(){
             if(myProphetIndex === ""){
                 let randIdx = Math.floor(Math.random() * prophetInfo.length);
@@ -360,7 +196,6 @@
             document.getElementById("prophetDescBox").innerHTML = `<div class="prophet-desc">先知简介：${myInfo.desc}</div>`;
         }
 
-        // 身份切换
         function setLeader(){
             isLeader = true;
             document.getElementById("rolePanel").classList.add("hide");
@@ -374,7 +209,6 @@
             showMainContent();
         }
 
-        // 确认小组人数
         async function confirmGroupNum(){
             let num = parseInt(document.getElementById("totalNumInput").value);
             if(isNaN(num) || num < 2 || num > 20){
@@ -387,7 +221,6 @@
             refreshView();
         }
 
-        // 随机选取带队先知
         async function randomPickProphet(){
             let ranIdx = Math.floor(Math.random() * groupTotal);
             currentLeadProphet = prophetInfo[ranIdx % prophetInfo.length].name;
@@ -395,7 +228,6 @@
             refreshView();
         }
 
-        // 切换议题
         async function switchNextQuestion(){
             currentQIndex++;
             if(currentQIndex >= questionList.length){
@@ -407,7 +239,6 @@
             refreshView();
         }
 
-        // 展示主内容区域
         function showMainContent(){
             document.getElementById("selfNameBox").classList.remove("hide");
             document.getElementById("prophetDescBox").classList.remove("hide");
@@ -416,7 +247,6 @@
             document.getElementById("notePanel").classList.remove("hide");
         }
 
-        // 加载对应议题内容
         function loadQuestion(){
             const item = questionList[currentQIndex];
             document.getElementById("question").innerText = item.q;
@@ -424,7 +254,6 @@
             document.getElementById("verse").innerText = item.v;
         }
 
-        // 保存笔记内容
         async function saveNote(){
             const noteVal = document.getElementById("noteInput").value;
             await updateDB("groupNote",noteVal);
