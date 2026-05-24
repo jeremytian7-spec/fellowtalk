@@ -80,7 +80,7 @@
         </div>
     </div>
 
-    <!-- 稳定版 Firebase -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
 
@@ -95,14 +95,164 @@
           appId: "1:509160448099:web:c950a9e888ccafc7709856"
         };
 
-        let db, docRef;
-        try {
-          firebase.initializeApp(firebaseConfig);
-          db = firebase.firestore();
-          docRef = db.collection("group_data").doc("mainData");
-        } catch (e) {
-          console.error("Firebase init failed:", e);
-          db = null;
+        let db = null, docRef = null;
+        let isLeader = false;
+        let groupTotal = 0;
+        let currentQIndex = 0;
+        let currentLeadProphet = "";
+        let myProphetIndex = localStorage.getItem("myProphetIndex") ?? "";
+        let hasGroupLeader = false;
+        let unsubscribe = null;
+
+        // 先分配名字，保证按钮立刻可用
+        function allocateSelfName() {
+            if (myProphetIndex === "") {
+                myProphetIndex = Math.floor(Math.random() * prophetInfo.length);
+                localStorage.setItem("myProphetIndex", myProphetIndex);
+            }
+            const myInfo = prophetInfo[myProphetIndex];
+            document.getElementById("selfNameBox").innerHTML = `<span class="self-name">${myInfo.name}</span>`;
+            document.getElementById("prophetDescBox").innerHTML = `<div class="prophet-desc">先知简介：${myInfo.desc}</div>`;
+        }
+
+        // 页面加载：先可用，再初始化 Firebase
+        window.onload = function () {
+            allocateSelfName();
+            // 延迟初始化 Firebase，避免卡住按钮
+            setTimeout(initFirebase, 100);
+        };
+
+        window。onbeforeunload = function () {
+            if (unsubscribe) unsubscribe();
+        };
+
+        function initFirebase() {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                docRef = db.collection("group_data").doc("mainData");
+                startRealtimeSync();
+            } catch (e) {
+                console.error("Firebase init fail:", e);
+            }
+        }
+
+        function startRealtimeSync() {
+            if (!db) return;
+            unsubscribe = docRef.onSnapshot((docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    groupTotal = data.groupTotal || 0;
+                    currentQIndex = data.currentQIndex || 0;
+                    currentLeadProphet = data.currentLeadProphet || "";
+                    hasGroupLeader = data.hasGroupLeader || false;
+                    document.getElementById("noteInput").value = data.groupNote || "";
+                }
+                refreshLeaderTip();
+                refreshView();
+            }, (err) => {
+                console.error("onSnapshot error:", err);
+            });
+        }
+
+        async function updateDB(field, value) {
+            if (!db) return;
+            try {
+                await docRef.update({ [field]: value });
+            } catch (e) {
+                console.error("updateDB fail:", e);
+            }
+        }
+
+        function refreshLeaderTip() {
+            const tipDom = document.getElementById("leaderLimitTip");
+            tipDom.innerText = hasGroupLeader ? "⚠️ 当前小组已有组长，暂无法新增组长" : "";
+        }
+
+        function refreshView() {
+            if (groupTotal > 0) {
+                document.getElementById("leaderNumShow").innerText = `当前小组在册总人数：${groupTotal} 人`;
+                document.getElementById("pickMemberBtn").classList.remove("hide");
+                document.getElementById("nextQBtn").classList.remove("hide");
+            } else {
+                document.getElementById("pickMemberBtn").classList.add("hide");
+                document.getElementById("nextQBtn").classList.add("hide");
+            }
+            document.getElementById("pickResult").innerText = currentLeadProphet ? `本轮议题带领先知：${currentLeadProphet}` : "";
+            document.getElementById("currentLeaderBox").innerText = currentLeadProphet ? `本轮议题带领先知：${currentLeadProphet}` : "";
+            loadQuestion();
+        }
+
+        async function setLeader() {
+            if (hasGroupLeader) {
+                alert("小组内已经存在组长，同一时间仅允许一位组长");
+                return;
+            }
+            isLeader = true;
+            await updateDB("hasGroupLeader", true);
+            document.getElementById("rolePanel").classList.add("hide");
+            document.getElementById("leaderSetPanel").classList.remove("hide");
+        }
+
+        function setMember() {
+            isLeader = false;
+            document.getElementById("rolePanel").classList.add("hide");
+            showMainContent();
+        }
+
+        async function resignLeader() {
+            if (!isLeader) return;
+            isLeader = false;
+            await updateDB("hasGroupLeader", false);
+            document.getElementById("leaderSetPanel").classList.add("hide");
+            document.getElementById("rolePanel").classList.remove("hide");
+        }
+
+        async function confirmGroupNum() {
+            let num = parseInt(document.getElementById("totalNumInput").value);
+            if (isNaN(num) || num < 2 || num > 20) {
+                alert("请输入2-20区间有效成员数量");
+                return;
+            }
+            groupTotal = num;
+            await updateDB("groupTotal", num);
+            showMainContent();
+        }
+
+        async function randomPickProphet() {
+            let ranIdx = Math.floor(Math.random() * groupTotal);
+            currentLeadProphet = prophetInfo[ranIdx % prophetInfo.length].name;
+            await updateDB("currentLeadProphet", currentLeadProphet);
+        }
+
+        async function switchNextQuestion() {
+            currentQIndex++;
+            if (currentQIndex >= questionList.length) {
+                alert("全部讨论议题已完结！");
+                currentQIndex = questionList.length - 1;
+            }
+            await updateDB("currentQIndex", currentQIndex);
+            await updateDB("currentLeadProphet", "");
+        }
+
+        function showMainContent() {
+            document.getElementById("selfNameBox").classList.remove("hide");
+            document.getElementById("prophetDescBox").classList.remove("hide");
+            document.getElementById("currentLeaderBox").classList.remove("hide");
+            document.getElementById("questionPanel").classList.remove("hide");
+            document.getElementById("notePanel").classList.remove("hide");
+        }
+
+        function loadQuestion() {
+            const item = questionList[currentQIndex];
+            document.getElementById("question").innerText = item.q;
+            document.getElementById("enQuestion").innerText = item.eq;
+            document.getElementById("verse").innerText = item.v;
+        }
+
+        async function saveNote() {
+            const noteVal = document.getElementById("noteInput").value;
+            await updateDB("groupNote", noteVal);
         }
 
         const prophetInfo = [
@@ -141,156 +291,6 @@
             {q:"自评当下的信仰信心程度，哪些事情会影响你的信心强弱？",eq:"Evaluate your current faith level, what affects your faith?",v:"希伯来书11:1 信就是所望之事的实底，是未见之事的确据。"},
             {q:"回望这段时光，细数三件你发自内心感恩上帝的事",eq:"Look back and share three things you sincerely thank God for",v:"帖撒罗尼迦前书5:18 凡事谢恩，因为这是神在基督耶稣里向你们所定的旨意。"}
         ];
-
-        let isLeader = false;
-        let groupTotal = 0;
-        let currentQIndex = 0;
-        let currentLeadProphet = "";
-        let myProphetIndex = localStorage.getItem("myProphetIndex") ?? "";
-        let hasGroupLeader = false;
-
-        window.onload = async function(){
-            if(db){
-                try{
-                    const res = await docRef.get();
-                    if(res.exists){
-                        const data = res.data();
-                        groupTotal = data.groupTotal || 0;
-                        currentQIndex = data.currentQIndex || 0;
-                        currentLeadProphet = data.currentLeadProphet || "";
-                        hasGroupLeader = data.hasGroupLeader || false;
-                        document.getElementById("noteInput").value = data.groupNote || "";
-                    }
-                }catch(err){
-                    console.log("数据加载异常",err);
-                }
-            }
-            refreshLeaderTip();
-            refreshView();
-        }
-
-        async function updateDB(field,value){
-            if(!db) return;
-            try{
-                await docRef.update({[field]:value});
-            }catch(e){
-                console.error("updateDB fail:",e);
-            }
-        }
-
-        function refreshLeaderTip(){
-            const tipDom = document.getElementById("leaderLimitTip");
-            if(hasGroupLeader){
-                tipDom.innerText = "⚠️ 当前小组已有组长，暂无法新增组长";
-            }else{
-                tipDom.innerText = "";
-            }
-        }
-
-        function refreshView(){
-            if(groupTotal > 0){
-                document.getElementById("leaderNumShow").innerText = `当前小组在册总人数：${groupTotal} 人`;
-                document.getElementById("pickMemberBtn").classList.remove("hide");
-                document.getElementById("nextQBtn").classList.remove("hide");
-            }
-            if(currentLeadProphet){
-                document.getElementById("pickResult").innerText = `本轮议题带领先知：${currentLeadProphet}`;
-                document.getElementById("currentLeaderBox").innerText = `本轮议题带领先知：${currentLeadProphet}`;
-            }
-            loadQuestion();
-        }
-
-        function allocateSelfName(){
-            if(myProphetIndex === ""){
-                let randIdx = Math.floor(Math.random() * prophetInfo.length);
-                myProphetIndex = randIdx;
-                localStorage.setItem("myProphetIndex",randIdx);
-            }
-            const myInfo = prophetInfo[myProphetIndex];
-            document.getElementById("selfNameBox").innerHTML = `<span class="self-name">${myInfo.name}</span>`;
-            document.getElementById("prophetDescBox").innerHTML = `<div class="prophet-desc">先知简介：${myInfo.desc}</div>`;
-        }
-
-        async function setLeader(){
-            if(hasGroupLeader){
-                alert("小组内已经存在组长，同一时间仅允许一位组长");
-                return;
-            }
-            isLeader = true;
-            hasGroupLeader = true;
-            await updateDB("hasGroupLeader", true);
-            refreshLeaderTip();
-            document.getElementById("rolePanel").classList.add("hide");
-            document.getElementById("leaderSetPanel").classList.remove("hide");
-            allocateSelfName();
-        }
-
-        function setMember(){
-            isLeader = false;
-            document.getElementById("rolePanel").classList.add("hide");
-            allocateSelfName();
-            showMainContent();
-        }
-
-        async function resignLeader(){
-            if(!isLeader) return;
-            isLeader = false;
-            hasGroupLeader = false;
-            await updateDB("hasGroupLeader", false);
-            refreshLeaderTip();
-            document.getElementById("leaderSetPanel").classList.add("hide");
-            document.getElementById("rolePanel").classList.remove("hide");
-        }
-
-        async function confirmGroupNum(){
-            let num = parseInt(document.getElementById("totalNumInput").value);
-            if(isNaN(num) || num < 2 || num > 20){
-                alert("请输入2-20区间有效成员数量");
-                return;
-            }
-            groupTotal = num;
-            await updateDB("groupTotal",num);
-            showMainContent();
-            refreshView();
-        }
-
-        async function randomPickProphet(){
-            let ranIdx = Math.floor(Math.random() * groupTotal);
-            currentLeadProphet = prophetInfo[ranIdx % prophetInfo.length].name;
-            await updateDB("currentLeadProphet",currentLeadProphet);
-            refreshView();
-        }
-
-        async function switchNextQuestion(){
-            currentQIndex++;
-            if(currentQIndex >= questionList.length){
-                alert("全部讨论议题已完结！");
-                currentQIndex = questionList.length - 1;
-            }
-            await updateDB("currentQIndex",currentQIndex);
-            await updateDB("currentLeadProphet","");
-            refreshView();
-        }
-
-        function showMainContent(){
-            document.getElementById("selfNameBox").classList.remove("hide");
-            document.getElementById("prophetDescBox").classList.remove("hide");
-            document.getElementById("currentLeaderBox").classList.remove("hide");
-            document.getElementById("questionPanel").classList.remove("hide");
-            document.getElementById("notePanel").classList.remove("hide");
-        }
-
-        function loadQuestion(){
-            const item = questionList[currentQIndex];
-            document.getElementById("question").innerText = item.q;
-            document.getElementById("enQuestion").innerText = item.eq;
-            document.getElementById("verse").innerText = item.v;
-        }
-
-        async function saveNote(){
-            const noteVal = document.getElementById("noteInput").value;
-            await updateDB("groupNote",noteVal);
-        }
     </script>
 </body>
 </html>
