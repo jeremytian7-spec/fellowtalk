@@ -217,6 +217,8 @@
         // 全局本地变量
         let isLeader = false;
         let groupTotal = 0;
+        // 记录已经使用过的议题下标，避免重复抽取
+        let usedQuestionIndex = [];
         let currentQIndex = 0;
         let currentLeadProphet = "";
         let myProphetIndex = localStorage.getItem("myProphetIndex") ?? "";
@@ -299,6 +301,10 @@
                 return;
             }
             groupTotal = num;
+            // 重置已使用题库记录
+            usedQuestionIndex = [];
+            // 首次随机抽取一题
+            randomSelectNewQuestion();
             showMainContent();
             refreshView();
         }
@@ -310,15 +316,35 @@
             refreshView();
         }
 
-        // 切换下一个议题
-        function switchNextQuestion(){
-            currentQIndex++;
-            if(currentQIndex >= questionList.length){
-                alert("全部讨论议题已完结！");
-                currentQIndex = questionList.length - 1;
+        // 随机抽取未使用议题
+        function randomSelectNewQuestion(){
+            const totalLen = questionList.length;
+            // 全部题目用完提示
+            if(usedQuestionIndex.length >= totalLen){
+                alert("所有讨论议题均已使用完毕！");
+                return false;
             }
+            // 筛选剩余可用下标
+            let availIndex = [];
+            for(let i=0; i<totalLen; i++){
+                if(!usedQuestionIndex.includes(i)){
+                    availIndex.push(i);
+                }
+            }
+            // 随机选一个
+            let randomIdx = availIndex[Math.floor(Math.random() * availIndex.length)];
+            currentQIndex = randomIdx;
+            usedQuestionIndex.push(randomIdx);
+            return true;
+        }
+
+        // 切换下一个随机议题
+        function switchNextQuestion(){
             currentLeadProphet = "";
-            refreshView();
+            let hasNew = randomSelectNewQuestion();
+            if(hasNew){
+                refreshView();
+            }
         }
 
         // 展示主体讨论内容
